@@ -14,6 +14,7 @@ const channelSchema = new Schema<IChannel>(
     workspaceId: {
       type: String,
       required: true,
+      ref: 'Workspace',
     },
   },
   {
