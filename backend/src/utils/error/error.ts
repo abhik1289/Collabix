@@ -54,7 +54,7 @@ export class NotFoundError extends ApiError {
 export class BadRequestError extends ApiError {
   constructor({ message,code="BAD_REQUEST" }: { message: string,code?: ErrorCode }) {
 
-    console.log("=>>>>>",code)
+    // console.log("=>>>>>",code)
 
     super({ message,code:code, status: StatusCodes.BAD_REQUEST })
   }
