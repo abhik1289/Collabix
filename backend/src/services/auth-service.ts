@@ -19,24 +19,28 @@ export class AuthService {
 
   async signIn(email: string, password: string) {
     const isExits = await this.userRepository.getUserByEmail(email)
-
+    console.log(isExits)
     if (!isExits) {
       throw new BadRequestError({
         message: 'Invalid email or password',
         code: 'INVALID_CREDENTIALS',
       })
     }
+    console.log(isExits)
 
-    const passwordMatch = await bcrypt.compare(password, isExits.password)
-
+    const passwordMatch = bcrypt.compareSync(password, isExits.password)
+    // console.log('===========>', passwordMatch)
     if (!passwordMatch) {
       throw new BadRequestError({ message: 'Invalid email or password' })
     }
 
+    console.log(passwordMatch)
     const userId = isExits._id.toString()
 
     const accessToken = generateAccessToken(userId)
     const refreshToken = generateRefreshToken(userId)
+
+    console.log(accessToken, refreshToken)
 
     return {
       accessToken,
@@ -45,17 +49,20 @@ export class AuthService {
   }
 
   async signUp(data: ISignUp) {
-    const { password, email } = data
+    const { email } = data
 
     const isExits = await this.userRepository.getUserByEmail(email)
 
     if (isExits) {
-      throw new BadRequestError({ message: 'Email already exists', code: 'DUPLICATE_KEY' })
+      throw new BadRequestError({
+        message: 'Email already exists',
+        code: 'DUPLICATE_KEY',
+      })
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10)
+    // const hashedPassword = await bcrypt.hash(password, 10)
 
-    const payload = { ...data, password: hashedPassword, username: email }
+    const payload = { ...data, username: email }
 
     return await this.userRepository.create(payload)
   }

@@ -8,7 +8,8 @@ export class curdRepository<T extends Document> {
   }
 
   async findById(id: string): Promise<T | null> {
-    return this.model.findById(id)
+    // console.log('THIS IS CALLED')
+    return await this.model.findById(id)
   }
 
   async findAll(): Promise<T[] | []> {

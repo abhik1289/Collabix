@@ -52,8 +52,12 @@ userSchema.pre('save', function () {
     return
   }
 
+  if (!this.avatar) {
+    const seed = this.name || this.username
+    this.avatar = `https://api.dicebear.com/9.x/initials/svg?seed=${seed}`
+  }
+
   this.password = hashSync(this.password, 10)
-  this.save()
 })
 
 const User: Model<IUser> = model<IUser>('User', userSchema)

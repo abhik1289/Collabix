@@ -1,40 +1,32 @@
-import { AuthService } from "../services/auth-service";
-import { ApiSuccess } from "../utils/api-success";
-import { asyncHandler } from "../utils/error/async-handler";
-import { signInSchema, signUpSchema } from "../validation/auth";
-
+import { AuthService } from '../services/auth-service'
+import { ApiSuccess } from '../utils/api-success'
+import { asyncHandler } from '../utils/error/async-handler'
+import { signInSchema } from '../validation/auth'
 
 const authService = new AuthService()
 
 export const signUpHandler = asyncHandler(async (req, res) => {
+  const user = await authService.signUp(req.body)
 
+  const response = new ApiSuccess(user)
 
-    const user = await authService.signUp(req.body)
-
-
-    const response = new ApiSuccess(user) 
-
-    res.status(201).json(response);
-
+  res.status(201).json(response)
 })
 
+export const signInHandler = asyncHandler(async (req, res) => {
+  const { email, password } = req.body
 
-export const signInHandler = asyncHandler(async (req, res) => { 
+  //   console.log(email, password)
 
+  const { accessToken, refreshToken } = await authService.signIn(
+    email,
+    password,
+  )
 
-    const { email, password } = req.body as signInSchema;
+  res.cookie('accessToken', accessToken, { httpOnly: true })
+  res.cookie('refreshToken', refreshToken, { httpOnly: true })
 
-    const {accessToken,refreshToken} = await authService.signIn(
-email, password 
-    );
+  const response = new ApiSuccess({ accessToken, refreshToken })
 
-
-    res.cookie('accessToken', accessToken, { httpOnly: true })
-    res.cookie('refreshToken', refreshToken, { httpOnly: true });
-
-    const response = new ApiSuccess({ accessToken, refreshToken })
-
-    res.status(200).json(response)
-
-
+  res.status(200).json(response)
 })
