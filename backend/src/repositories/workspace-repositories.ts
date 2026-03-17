@@ -1,18 +1,22 @@
 import { Types } from 'mongoose'
 import ChannelModel, { IChannel } from '../models/channel.model'
 import Workspace, { IWorkspace } from '../models/workspace.schema'
-import { BadRequestError, NotFoundError } from '../utils/error'
+import { BadRequestError, NotFoundError } from '../utils/error/error'
 import { curdRepository } from './curd-repositories'
 import { UserRepository } from './user-repositories'
 
-interface IWorkSpaceMember {
-  name: string
-  email: string
-  avatar: string
-  username: string
+interface IWorkSpaceMemberPopulated {
+  memberId: {
+    _id: Types.ObjectId
+    name: string
+    email: string
+    avatar: string
+    username: string
+  }
+  role: 'admin' | 'member'
 }
 
-export class WorkRepository extends curdRepository<IWorkspace> {
+export class WorkSpaceRepository extends curdRepository<IWorkspace> {
   private userRepository: UserRepository
 
   constructor() {
@@ -23,7 +27,7 @@ export class WorkRepository extends curdRepository<IWorkspace> {
   async findWorkSpaceById(id: string) {
     return await Workspace.findById(id)
       .populate<{
-        members: IWorkSpaceMember[]
+        members: IWorkSpaceMemberPopulated[]
       }>('members.memberId', 'name email avatar username')
       .populate<{
         channels: { name: string }[]
@@ -60,7 +64,7 @@ export class WorkRepository extends curdRepository<IWorkspace> {
     )
 
     if (isMember) {
-      throw new BadRequestError('User is already a member of this workspace')
+      throw new BadRequestError({ message: 'User is already a member of this workspace' })
     }
 
     isWorkSpaceExits.members.push({
@@ -87,7 +91,7 @@ export class WorkRepository extends curdRepository<IWorkspace> {
     )
 
     if (isChannelExists) {
-      throw new BadRequestError('Channel is already a member of this workspace')
+      throw new BadRequestError({ message: 'Channel is already a member of this workspace' })
     }
 
     const createChannel = await ChannelModel.create({
@@ -106,7 +110,7 @@ export class WorkRepository extends curdRepository<IWorkspace> {
     return await Workspace.find({
       'members.memberId': new Types.ObjectId(memebrId),
     }).populate<{
-      members: IWorkSpaceMember[]
+      members: IWorkSpaceMemberPopulated[]
     }>('members.memberId', 'name email avatar username')
   }
 }

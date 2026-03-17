@@ -1,5 +1,5 @@
 import { UserRepository } from '../repositories/user-repositories'
-import { BadRequestError } from '../utils/error'
+import { BadRequestError } from '../utils/error/error'
 import bcrypt from 'bcryptjs'
 import { generateAccessToken, generateRefreshToken } from '../utils/token'
 
@@ -7,7 +7,7 @@ interface ISignUp {
   name: string
   email: string
   password: string
-  avatar: string
+  avatar?: string
 }
 
 export class AuthService {
@@ -21,13 +21,16 @@ export class AuthService {
     const isExits = await this.userRepository.getUserByEmail(email)
 
     if (!isExits) {
-      throw new BadRequestError('Invalid email or password')
+      throw new BadRequestError({
+        message: 'Invalid email or password',
+        code: 'INVALID_CREDENTIALS',
+      })
     }
 
     const passwordMatch = await bcrypt.compare(password, isExits.password)
 
     if (!passwordMatch) {
-      throw new BadRequestError('Invalid email or password')
+      throw new BadRequestError({ message: 'Invalid email or password' })
     }
 
     const userId = isExits._id.toString()
@@ -42,15 +45,15 @@ export class AuthService {
   }
 
   async signUp(data: ISignUp) {
-    const { password,email} = data
+    const { password, email } = data
 
     const isExits = await this.userRepository.getUserByEmail(email)
 
     if (isExits) {
-      throw new BadRequestError('Email already exists')
+      throw new BadRequestError({ message: 'Email already exists', code: 'DUPLICATE_KEY' })
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10)
 
     const payload = { ...data, password: hashedPassword, username: email }
 

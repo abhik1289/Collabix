@@ -25,4 +25,8 @@ export class curdRepository<T extends Document> {
   async delete(id: string): Promise<T | null> {
     return this.model.findByIdAndDelete(id)
   }
+
+  async deleteMany(id: string) {
+    return this.model.deleteMany({ workspaceId: id })
+  }
 }

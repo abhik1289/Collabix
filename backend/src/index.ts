@@ -1,6 +1,9 @@
-import { serverConfig } from './configs/server.config'
+// import { serverConfig } from './configs/server.config'
 import express from 'express'
 import v1Router from './routes/v1/index'
+import { serverConfigEnv } from './configs/server.config'
+import { errorMiddleware } from './middleware/error.middleware';
+import {connectDB} from './utils/db/db'
 
 const app = express()
 
@@ -13,10 +16,21 @@ app.get('/', (_req, res) => {
     health: '/api/v1/health',
   })
 })
-
 //integrate router
 app.use('/api/v1', v1Router)
 
-app.listen(serverConfig.port, () => {
-  console.log(`Server is running on port ${serverConfig.port}`)
+
+app.use(errorMiddleware);
+
+
+const startServer = async()=>{
+ await connectDB();
+app.listen(serverConfigEnv.port, () => {
+  // connectDB();
+  console.log(`Server is running on port ${serverConfigEnv.port}`)
 })
+
+}
+
+
+startServer()

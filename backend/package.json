@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "license": "ISC",
-  "author": "",
+  "author": "Abhik Patra",
   "main": "index.js",
+  "type": "commonjs",
   "lint-staged": {
     "*.ts": [
       "eslint --fix",
@@ -12,7 +13,7 @@
     ]
   },
   "scripts": {
-    "dev": "ts-node-dev src/index.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "eslint .",
@@ -28,6 +29,7 @@
     "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.3.0",
+    "uuid": "^13.0.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
