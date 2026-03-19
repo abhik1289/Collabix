@@ -4,6 +4,7 @@ import Workspace, { IWorkspace } from '../models/workspace.schema'
 import { BadRequestError, NotFoundError } from '../utils/error/error'
 import { curdRepository } from './curd-repositories'
 import { UserRepository } from './user-repositories'
+import { channelRepository } from './channel-repositories'
 
 interface IWorkSpaceMemberPopulated {
   memberId: {
@@ -18,10 +19,12 @@ interface IWorkSpaceMemberPopulated {
 
 export class WorkSpaceRepository extends curdRepository<IWorkspace> {
   private userRepository: UserRepository
+  private channelRepository: channelRepository
 
   constructor() {
     super(Workspace)
     this.userRepository = new UserRepository()
+    this.channelRepository = new channelRepository()
   }
 
   async findWorkSpaceById(id: string) {
@@ -112,5 +115,54 @@ export class WorkSpaceRepository extends curdRepository<IWorkspace> {
     }).populate<{
       members: IWorkSpaceMemberPopulated[]
     }>('members.memberId', 'name email avatar username')
+  }
+
+  async addChannelToWorkSpace(workSpaceId:string,channelName:string){
+    
+
+    const workspace = await this.findWorkSpaceById(workSpaceId);
+
+    if (!workspace) {
+      throw new NotFoundError('Workspace not found')
+    }
+
+    const isChannelExists = workspace.channels.find(
+      (ch) => ch.name === channelName,
+    )
+
+    if (isChannelExists) {
+      throw new BadRequestError({ message: 'Channel is already a member of this workspace' })
+    }
+
+    const channel = await this.channelRepository.create({
+      name: channelName,
+      workspaceId: workSpaceId,
+    });
+
+    workspace.channels.push(channel);
+    await workspace.save();
+    return workspace;
+
+
+
+  }
+
+  
+
+  async removeMemberFromWorkSpace(workSpaceId: string, memberId: string) {
+   
+
+
+    await Workspace.findByIdAndUpdate(workSpaceId, {
+      $pull: {
+        members: {
+          memberId: new Types.ObjectId(memberId),
+        },
+      },
+    });
+
+    return true;
+
+
   }
 }

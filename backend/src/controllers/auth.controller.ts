@@ -1,7 +1,7 @@
-import { AuthService } from '../services/auth-service'
+import { AuthService } from '../services/auth.service'
 import { ApiSuccess } from '../utils/api-success'
 import { asyncHandler } from '../utils/error/async-handler'
-import { signInSchema } from '../validation/auth'
+// import { signInSchema } from '../validation/auth'
 
 const authService = new AuthService()
 
@@ -15,8 +15,6 @@ export const signUpHandler = asyncHandler(async (req, res) => {
 
 export const signInHandler = asyncHandler(async (req, res) => {
   const { email, password } = req.body
-
-  //   console.log(email, password)
 
   const { accessToken, refreshToken } = await authService.signIn(
     email,

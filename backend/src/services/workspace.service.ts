@@ -135,4 +135,114 @@ export class WorkSpaceService {
 
     return workspace
   }
+
+
+  async leaveWorkSpaceService(workspaceId: string, userId: string) {
+    const workspace =
+      await this.workSpaceRepository.findWorkSpaceById(workspaceId);
+
+    if (!workspace) {
+      throw new NotFoundError('Workspace not found')
+    }
+
+    const isMember = await this.isUserIsAWorkSpaceMember(workspace, userId);
+
+    if (!isMember) {
+      throw new BadRequestError({
+        message: 'You are not a member of this workspace',
+      })
+    };
+
+    //remove member from workspace
+    await this.workSpaceRepository.removeMemberFromWorkSpace(workspaceId, userId);
+
+    return workspace;
+  }
+
+
+  async deleteMemberFormWorkSpace(workspaceId: string, userId: string) {
+    const workspace =
+      await this.workSpaceRepository.findWorkSpaceById(workspaceId);
+
+    if (!workspace) {
+      throw new NotFoundError('Workspace not found')
+    }
+
+
+    const isMember = await this.isUserIsAWorkSpaceMember(workspace, userId);
+
+    if (!isMember) {
+      throw new BadRequestError({
+        message: 'You are not a member of this workspace',
+      })
+    };
+
+    const isWorkSpaceAdmin = await this.isUserIsAWorkSpaceAdmin(workspace, userId);
+
+    if (!isWorkSpaceAdmin) {
+      throw new BadRequestError({
+        message: 'You are not a admin of this workspace',
+      })
+    };
+
+
+
+    //remove member from workspace
+    await this.workSpaceRepository.removeMemberFromWorkSpace(workspaceId, userId);
+
+  }
+
+
+  async addChannelToWorkSpace(workspaceId: string, channelId: string) {
+    
+
+    await this.workSpaceRepository.addChannelToWorkSpace(workspaceId, channelId);
+
+    return {
+      "message": "Channel added to workspace successfully"
+    }
+
+
+  }
+
+
+  async getWorkSpaceMembersService(workspaceId: string) {
+    const workspace =
+      await this.workSpaceRepository.findWorkSpaceById(workspaceId);
+
+    if (!workspace) {
+      throw new NotFoundError('Workspace not found')
+    }
+
+    const members = workspace.members.map((m:any) => ({
+      id: m.memberId.toString(),
+      role: m.role,
+      name: m.name,
+      email: m.email,
+    }));
+
+    return members;
+
+
+
+  }
+
+
+  async getWorkSpaceChannelsService(workspaceId: string) {
+    const workspace =
+      await this.workSpaceRepository.findWorkSpaceById(workspaceId);
+
+    if (!workspace) {
+      throw new NotFoundError('Workspace not found')
+    }
+
+    const channels = workspace.channels.map((m:any) => ({
+      id: m._id.toString(),
+      name: m.name,
+      createdAt: m.createdAt
+    }));
+
+    return channels;
+  }
+
 }
