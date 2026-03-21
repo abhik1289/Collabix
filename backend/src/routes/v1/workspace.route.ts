@@ -1,16 +1,18 @@
 import express from 'express'
-import { createWorkspaceHandler, getWorkSpaceById, getWorkSpaceMembersHandler, updateWorkSpaceHandler,deleteWorkSpaceHandler, joinWorkSpaceHandlerByJoinCodeHandler, leaveWorkSpaceHandler, getWorkSpaceChannelsHandler, addChannelWorkSpaceHandler } from '../../controllers/workspace.controller'
+import { createWorkspaceHandler, getWorkSpaceById, getWorkSpaceMembersHandler, updateWorkSpaceHandler,deleteWorkSpaceHandler, joinWorkSpaceHandlerByJoinCodeHandler, leaveWorkSpaceHandler, getWorkSpaceChannelsHandler, addChannelWorkSpaceHandler, getWorkSpaceByUserIdHandler, addMemberToWorkSpaceHandler, deleteChannelToWorkSpaceHandler } from '../../controllers/workspace.controller'
 import { validation } from '../../validation';
-import { createWorkspaceSchema } from '../../validation/workspace';
+import { addMemberSchema, createChannelSchema, createWorkspaceSchema } from '../../validation/workspace';
+import { isAuthenticated } from '../../middleware/authenticated';
 
-const workspaceWrouter = express.Router()
+const workspaceRrouter = express.Router()
 
 
+workspaceRrouter.use(isAuthenticated)
 
 
-workspaceWrouter
+workspaceRrouter
 .post('/',validation(createWorkspaceSchema),createWorkspaceHandler)
-.get("/",getWorkSpaceMembersHandler)
+.get("/",getWorkSpaceByUserIdHandler)
 .get("/:workspaceId",getWorkSpaceById)
 .get("/:workspaceId/members",getWorkSpaceMembersHandler)
 .get("/:workspaceId/channels",getWorkSpaceChannelsHandler)
@@ -18,10 +20,12 @@ workspaceWrouter
 .delete("/:workspaceId",deleteWorkSpaceHandler)
 .patch("/:workspaceId/code",joinWorkSpaceHandlerByJoinCodeHandler)
 .patch("/:workspaceId/leave",leaveWorkSpaceHandler)
-.patch("/:workspaceId/channels",addChannelWorkSpaceHandler)
-.patch("/:workspaceId/members",addChannelWorkSpaceHandler)
+.patch("/:workspaceId/remove/:memberId",addMemberToWorkSpaceHandler)
+.patch("/:workspaceId/remove/:channelId",deleteChannelToWorkSpaceHandler)
+.patch("/:workspaceId/channels", validation(createChannelSchema), addChannelWorkSpaceHandler)
+.patch("/:workspaceId/members",validation(addMemberSchema), addMemberToWorkSpaceHandler)
 
 
 
 
-export default workspaceWrouter
+export default workspaceRrouter

@@ -78,3 +78,9 @@ export class ZodValidationError extends ApiError {
     super({ message,code:"ZOD_VALIDATION_ERROR", status: StatusCodes.BAD_REQUEST,details })
   }
 }
+
+export class UnAuthenticatedError extends ApiError {
+  constructor(message: string,code?: ErrorCode) {
+    super({ message,code:code??"AUTHENTICATION_ERROR", status: StatusCodes.UNAUTHORIZED })
+  }
+}

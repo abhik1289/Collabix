@@ -3,6 +3,7 @@ import { WorkSpaceRepository } from '../repositories/workspace-repositories'
 import { BadRequestError, NotFoundError } from '../utils/error/error'
 import { channelRepository } from '../repositories/channel-repositories'
 import { v4 as uuidv4 } from 'uuid'
+// import { ObjectId } from "mongodb";
 import { Types } from 'mongoose'
 
 // Represents a workspace where members.memberId and channels have been populated
@@ -77,8 +78,33 @@ export class WorkSpaceService {
     return this.workSpaceRepository.findById(id)
   }
 
-  async updateWorkSpace(id: string, data: Partial<IWorkspace>) {
-    return this.workSpaceRepository.update(id, data)
+  async updateWorkSpace(id: string, userId: string, data: Partial<IWorkspace>) {
+    const workSpaceId = new Types.ObjectId(id)
+    const _userId = new Types.ObjectId(userId)
+
+    const workspace = await this.getWorkSpaceById(workSpaceId.toString())
+
+    if (!workspace) {
+      throw new NotFoundError('Workspace not found')
+    }
+    console.log(workspace._id)
+
+    const isAllowed = await this.isUserIsAWorkSpaceAdmin(
+      workspace,
+      _userId.toString(),
+    )
+
+    if (!isAllowed) {
+      throw new BadRequestError({
+        message: 'You are not allowed to update this workspace',
+      })
+    }
+
+    const response = await this.workSpaceRepository.update(
+      workSpaceId.toString(),
+      data,
+    )
+    return response
   }
 
   async deleteWorkSpace(workSpaceId: string, userId: string) {
@@ -136,117 +162,189 @@ export class WorkSpaceService {
     return workspace
   }
 
+  async addMemberToWorkSpaceService(workspaceId: string, userId: string,memberId: string) {
 
-  async leaveWorkSpaceService(workspaceId: string, userId: string) {
     const workspace =
-      await this.workSpaceRepository.findWorkSpaceById(workspaceId);
+      await this.workSpaceRepository.findWorkSpaceById(workspaceId)
+
+
+      // console.log(userId)
 
     if (!workspace) {
       throw new NotFoundError('Workspace not found')
     }
+    console.log(workspace)
 
-    const isMember = await this.isUserIsAWorkSpaceMember(workspace, userId);
-
-    if (!isMember) {
-      throw new BadRequestError({
-        message: 'You are not a member of this workspace',
-      })
-    };
-
-    //remove member from workspace
-    await this.workSpaceRepository.removeMemberFromWorkSpace(workspaceId, userId);
-
-    return workspace;
-  }
-
-
-  async deleteMemberFormWorkSpace(workspaceId: string, userId: string) {
-    const workspace =
-      await this.workSpaceRepository.findWorkSpaceById(workspaceId);
-
-    if (!workspace) {
-      throw new NotFoundError('Workspace not found')
-    }
-
-
-    const isMember = await this.isUserIsAWorkSpaceMember(workspace, userId);
-
-    if (!isMember) {
-      throw new BadRequestError({
-        message: 'You are not a member of this workspace',
-      })
-    };
-
-    const isWorkSpaceAdmin = await this.isUserIsAWorkSpaceAdmin(workspace, userId);
+    const isWorkSpaceAdmin = await this.isUserIsAWorkSpaceAdmin(workspace, userId)
 
     if (!isWorkSpaceAdmin) {
       throw new BadRequestError({
         message: 'You are not a admin of this workspace',
       })
-    };
+    }
+    const isMember = await this.isUserIsAWorkSpaceMember(workspace, memberId)
 
-
-
-    //remove member from workspace
-    await this.workSpaceRepository.removeMemberFromWorkSpace(workspaceId, userId);
-
-  }
-
-
-  async addChannelToWorkSpace(workspaceId: string, channelId: string) {
-    
-
-    await this.workSpaceRepository.addChannelToWorkSpace(workspaceId, channelId);
-
-    return {
-      "message": "Channel added to workspace successfully"
+    if (isMember) {
+      throw new BadRequestError({
+        message: 'You are already a member of this workspace',
+      })
     }
 
+    await this.workSpaceRepository.addMemberToWorkSpace(
+      workspaceId,
+      userId,
+      'member',
+    )
 
   }
 
-
-  async getWorkSpaceMembersService(workspaceId: string) {
+  async leaveWorkSpaceService(workspaceId: string, userId: string) {
     const workspace =
-      await this.workSpaceRepository.findWorkSpaceById(workspaceId);
+      await this.workSpaceRepository.findWorkSpaceById(workspaceId)
 
     if (!workspace) {
       throw new NotFoundError('Workspace not found')
     }
 
-    const members = workspace.members.map((m:any) => ({
-      id: m.memberId.toString(),
-      role: m.role,
-      name: m.name,
-      email: m.email,
-    }));
+    const isMember = await this.isUserIsAWorkSpaceMember(workspace, userId)
 
-    return members;
+    if (!isMember) {
+      throw new BadRequestError({
+        message: 'You are not a member of this workspace',
+      })
+    }
 
+    //remove member from workspace
+    await this.workSpaceRepository.removeMemberFromWorkSpace(
+      workspaceId,
+      userId,
+    )
 
-
+    return workspace
   }
 
+  async deleteMemberFormWorkSpace(workspaceId: string, userId: string) {
+    const workspace =
+      await this.workSpaceRepository.findWorkSpaceById(workspaceId)
+
+    if (!workspace) {
+      throw new NotFoundError('Workspace not found')
+    }
+
+    const isMember = await this.isUserIsAWorkSpaceMember(workspace, userId)
+
+    if (!isMember) {
+      throw new BadRequestError({
+        message: 'You are not a member of this workspace',
+      })
+    }
+
+    const isWorkSpaceAdmin = await this.isUserIsAWorkSpaceAdmin(
+      workspace,
+      userId,
+    )
+
+    if (!isWorkSpaceAdmin) {
+      throw new BadRequestError({
+        message: 'You are not a admin of this workspace',
+      })
+    }
+
+    //remove member from workspace
+    await this.workSpaceRepository.removeMemberFromWorkSpace(
+      workspaceId,
+      userId,
+    )
+  }
+
+  async addChannelToWorkSpace(workspaceId: string, channelId: string) {
+
+
+    const workspace =
+      await this.workSpaceRepository.findWorkSpaceById(workspaceId)
+
+    if (!workspace) {
+      throw new NotFoundError('Workspace not found')
+    }
+
+    const isWorkSpaceAdmin = await this.isUserIsAWorkSpaceAdmin(
+      workspace,
+      workspaceId,
+    )
+
+    if (!isWorkSpaceAdmin) {
+      throw new BadRequestError({
+        message: 'You are not a admin of this workspace',
+      })
+    }
+
+    await this.workSpaceRepository.addChannelToWorkSpace(workspaceId, channelId)
+
+    return {
+      message: 'Channel added to workspace successfully',
+    }
+  }
+
+  async getWorkSpaceMembersService(workspaceId: string) {
+    const workspace = await this.workSpaceRepository.findWorkSpaceById(workspaceId)
+
+    if (!workspace) {
+      throw new NotFoundError('Workspace not found')
+    }
+
+   
+
+    const members = workspace.members.map((m: any) => ({
+      role: m.role,
+      name: m.memberId.name,
+      email: m.memberId.email,
+    }))
+
+   
+
+    return members
+  }
 
   async getWorkSpaceChannelsService(workspaceId: string) {
     const workspace =
-      await this.workSpaceRepository.findWorkSpaceById(workspaceId);
+      await this.workSpaceRepository.findWorkSpaceById(workspaceId)
 
     if (!workspace) {
       throw new NotFoundError('Workspace not found')
     }
 
-    const channels = workspace.channels.map((m:any) => ({
+    const channels = workspace.channels.map((m: any) => ({
       id: m._id.toString(),
       name: m.name,
-      createdAt: m.createdAt
-    }));
+      createdAt: m.createdAt,
+    }))
 
-    return channels;
+    return channels
   }
 
   async getWorkSpaces(id: string) {
     return this.workSpaceRepository.findAllWorkSpaceByMemberId(id)
   }
 
+  async deleteChannelToWorkSpace(workspaceId: string,userId: string, channelId: string) {
+   
+
+
+    const workspace = await this.workSpaceRepository.findWorkSpaceById(workspaceId)
+
+    if (!workspace) {
+      throw new NotFoundError('Workspace not found')
+    }
+
+    const isWorkSpaceAdmin = await this.isUserIsAWorkSpaceAdmin(workspace, userId)
+
+    if (!isWorkSpaceAdmin) {
+      throw new BadRequestError({
+        message: 'You are not a admin of this workspace',
+      })
+    }
+
+    await this.workSpaceRepository.removeChannelFromWorkSpace(workspaceId, channelId)
+
+  }
 }

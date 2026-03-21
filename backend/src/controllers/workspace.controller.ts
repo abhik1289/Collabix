@@ -5,6 +5,7 @@ import { AuthUser } from "../types/express";
 import { WorkSpaceService } from "../services/workspace.service";
 import { ApiSuccess } from "../utils/api-success";
 import { BadRequestError } from "../utils/error/error";
+import { IAddMember} from "../validation/workspace";
 
 
 const workSpaceService = new WorkSpaceService()
@@ -40,7 +41,7 @@ export const getWorkSpacesHandler = asyncHandler(async (req:Request, res:Respons
 export const getWorkSpaceById = asyncHandler(async (req:Request, res:Response) => {
 
 
-    const workspaceId = req.params.id as string;
+    const workspaceId = req.params.workspaceId as string;
 
     if(!workspaceId){
         throw new BadRequestError({message:"Workspace id is required"})
@@ -56,13 +57,16 @@ export const getWorkSpaceById = asyncHandler(async (req:Request, res:Response) =
 export const updateWorkSpaceHandler = asyncHandler(async (req:Request, res:Response) => {
 
 
-    const workspaceId = req.params.id as string;
+    const workspaceId = req.params.workspaceId as string;
+    const {id:userId} = req.user as AuthUser;
+
+    // console.log(req.body)
 
     if(!workspaceId){
         throw new BadRequestError({message:"Workspace id is required"})
     }
 
-    const workspace = await workSpaceService.updateWorkSpace(workspaceId,req.body);
+    const workspace = await workSpaceService.updateWorkSpace(workspaceId,userId,req.body);
     const response = new ApiSuccess(workspace);
 
      res.status(200).json(response);
@@ -164,16 +168,38 @@ export const getWorkSpaceChannelsHandler = asyncHandler(async (req:Request, res:
 })
 
 export const addChannelWorkSpaceHandler = asyncHandler(async (req:Request, res:Response) => {
-    const workspaceId = req.params.id as string;
+    const workspaceId = req.params.workspaceId as string;
     if(!workspaceId){
         throw new BadRequestError({message:"Workspace id is required"})
     }
 
-    const {channelName} = req.body;
+    const {name} = req.body;
 
-    await workSpaceService.addChannelToWorkSpace(workspaceId,channelName);
+    await workSpaceService.addChannelToWorkSpace(workspaceId,name);
+   const response = new ApiSuccess({
+       message:"Channel added to workspace successfully"
+   });
+
+     res.status(200).json(response);
 
 
+})
+
+
+export const deleteChannelToWorkSpaceHandler = asyncHandler(async (req:Request, res:Response) => {
+
+    const workspaceId = req.params.workspaceId as string;
+    const channelId = req.params.channelId as string;
+
+    const {id:userId} = req.user as AuthUser;
+
+    if(!workspaceId || !channelId){
+        throw new BadRequestError({message:"Workspace id or channel id is required"})
+    }
+
+    const workspace = await workSpaceService.deleteChannelToWorkSpace(workspaceId,userId,channelId);
+    const response = new ApiSuccess(workspace);
+    res.status(200).json(response);
 })
 
 export const getWorkSpaceByUserIdHandler = asyncHandler(async (req:Request, res:Response) => {
@@ -181,9 +207,16 @@ export const getWorkSpaceByUserIdHandler = asyncHandler(async (req:Request, res:
 
     
 
-    const {userId} = req.params as {userId:string};
+    
 
-    const workspace = await workSpaceService.getWorkSpaceById(userId);
+    const {id:userId} = req.user as AuthUser;
+
+    if(!userId)
+{
+    throw new BadRequestError({message:"User id is required"})
+}
+// console.log(userId)
+    const workspace = await workSpaceService.getWorkSpaces(userId);
     const response = new ApiSuccess(workspace);
 
      res.status(200).json(response);
@@ -195,14 +228,19 @@ export const getWorkSpaceByUserIdHandler = asyncHandler(async (req:Request, res:
 
 
 export const addMemberToWorkSpaceHandler = asyncHandler(async (req:Request, res:Response) => {
-    const {workSpaceId,userId} = req.params as {workSpaceId:string,userId:string};
+    const {workspaceId} = req.params as {workspaceId:string};
+
+    const {memberId} = req.body as IAddMember;
+
+    const {id:userId} = req.user as AuthUser;
   
     
 
-    const workspace = await workSpaceService.joinWorkSpaceService(workSpaceId,userId,req.body.joinCode);
+    const workspace = await workSpaceService.addMemberToWorkSpaceService(workspaceId,userId,memberId);
 
 
     const response = new ApiSuccess(workspace);
      res.status(200).json(response);
 
 })
+

@@ -23,6 +23,7 @@ export const errorMiddleware = (error: any, _req: Request, res: Response, _next:
         }));
         res.status(400).json( new ZodValidationError('Validation Error', err));
     };
+    console.log(error)
     return res.status(500).json({
     success: false,
     message: "Internal Server Error",

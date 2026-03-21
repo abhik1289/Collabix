@@ -112,9 +112,7 @@ export class WorkSpaceRepository extends curdRepository<IWorkspace> {
   async findAllWorkSpaceByMemberId(memebrId: string) {
     return await Workspace.find({
       'members.memberId': new Types.ObjectId(memebrId),
-    }).populate<{
-      members: IWorkSpaceMemberPopulated[]
-    }>('members.memberId', 'name email avatar username')
+    })
   }
 
   async addChannelToWorkSpace(workSpaceId:string,channelName:string){
@@ -125,6 +123,8 @@ export class WorkSpaceRepository extends curdRepository<IWorkspace> {
     if (!workspace) {
       throw new NotFoundError('Workspace not found')
     }
+
+  
 
     const isChannelExists = workspace.channels.find(
       (ch) => ch.name === channelName,
@@ -137,7 +137,8 @@ export class WorkSpaceRepository extends curdRepository<IWorkspace> {
     const channel = await this.channelRepository.create({
       name: channelName,
       workspaceId: workSpaceId,
-    });
+    },
+  );
 
     workspace.channels.push(channel);
     await workspace.save();
@@ -164,5 +165,17 @@ export class WorkSpaceRepository extends curdRepository<IWorkspace> {
     return true;
 
 
+  }
+
+  async removeChannelFromWorkSpace(workSpaceId: string, channelId: string) {
+    await Workspace.findByIdAndUpdate(workSpaceId, {
+      $pull: {
+        channels: {
+          _id: new Types.ObjectId(channelId),
+        },
+      },
+    });
+
+    return true;
   }
 }

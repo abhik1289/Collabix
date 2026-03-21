@@ -17,10 +17,7 @@ export class curdRepository<T extends Document> {
   }
 
   async update(id: string, data: Partial<T>): Promise<T | null> {
-    return this.model.findByIdAndUpdate({
-      id,
-      data,
-    })
+    return this.model.findByIdAndUpdate(id, data, { new: true })
   }
 
   async delete(id: string): Promise<T | null> {
