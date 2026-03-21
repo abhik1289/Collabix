@@ -245,4 +245,8 @@ export class WorkSpaceService {
     return channels;
   }
 
+  async getWorkSpaces(id: string) {
+    return this.workSpaceRepository.findAllWorkSpaceByMemberId(id)
+  }
+
 }

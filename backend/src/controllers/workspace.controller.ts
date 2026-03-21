@@ -24,8 +24,18 @@ export const createWorkspaceHandler = asyncHandler(async (req:Request, res:Respo
     res.status(201).json(response);
 
 
-})
+});
 
+
+export const getWorkSpacesHandler = asyncHandler(async (req:Request, res:Response) => {
+
+
+     const {id:userId} = req.user as AuthUser;
+
+    const workspaces = await workSpaceService.getWorkSpaceById(userId);
+    const response = new ApiSuccess(workspaces);
+     res.status(200).json(response);
+})
 
 export const getWorkSpaceById = asyncHandler(async (req:Request, res:Response) => {
 
@@ -59,7 +69,7 @@ export const updateWorkSpaceHandler = asyncHandler(async (req:Request, res:Respo
 
 })
 
-export const delteWorkSpaceHandler = asyncHandler(async (req:Request, res:Response) => {
+export const deleteWorkSpaceHandler = asyncHandler(async (req:Request, res:Response) => {
 
 
     const workspaceId = req.params.id as string;
@@ -98,8 +108,9 @@ export const joinWorkSpaceHandlerByJoinCodeHandler = asyncHandler(async (req:Req
 
 export const leaveWorkSpaceHandler = asyncHandler(async (req:Request, res:Response) => {
 
-    const {workspaceId,userId} = req.params as {workspaceId:string,userId:string};
+    const {workspaceId} = req.params as {workspaceId:string};
     
+    const {id:userId} = req.user as AuthUser;
 
     if(!workspaceId || !userId){
         throw new BadRequestError({message:"Workspace id or user id missing"})
@@ -115,12 +126,9 @@ export const leaveWorkSpaceHandler = asyncHandler(async (req:Request, res:Respon
 
 })
 
-
-
-
 export const getWorkSpaceMembersHandler = asyncHandler(async (req:Request, res:Response) => {
 
- const workspaceId = req.params.id as string;
+ const workspaceId = req.params.workspaceId as string;
 
 
     if(!workspaceId){
@@ -138,7 +146,7 @@ export const getWorkSpaceMembersHandler = asyncHandler(async (req:Request, res:R
 export const getWorkSpaceChannelsHandler = asyncHandler(async (req:Request, res:Response) => {
 
 
-    const workspaceId = req.params.id as string;
+    const workspaceId = req.params.workspaceId as string;
 
 
     if(!workspaceId){
