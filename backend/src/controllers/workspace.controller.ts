@@ -169,13 +169,14 @@ export const getWorkSpaceChannelsHandler = asyncHandler(async (req:Request, res:
 
 export const addChannelWorkSpaceHandler = asyncHandler(async (req:Request, res:Response) => {
     const workspaceId = req.params.workspaceId as string;
+    const {id:userId} = req.user as AuthUser;
     if(!workspaceId){
         throw new BadRequestError({message:"Workspace id is required"})
     }
 
     const {name} = req.body;
 
-    await workSpaceService.addChannelToWorkSpace(workspaceId,name);
+    await workSpaceService.addChannelToWorkSpace(workspaceId,name,userId);
    const response = new ApiSuccess({
        message:"Channel added to workspace successfully"
    });

@@ -5,7 +5,8 @@ import workspaceRrouter from './workspace.route'
 const v1Router = express.Router()
 
 //check helath
-v1Router.get('/health', (_req, res) => {
+v1Router.get('/health', (req, res) => {
+  console.log(req.headers)
   res.status(200).send('ok')
 })
 

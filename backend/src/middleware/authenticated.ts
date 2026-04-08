@@ -7,8 +7,9 @@ import { NotFoundError, UnAuthenticatedError } from '../utils/error/error'
 
 export const isAuthenticated = asyncHandler(
   async (req: Request, _res: Response, next: NextFunction) => {
+  
     const token = req.headers['x-access-token'] as string
-    console.log('TOKEN', token)
+    console.log('TOKEN', req.headers)
     if (!token) {
       throw new UnAuthenticatedError('Unauthorized', 'AUTHENTICATION_ERROR')
     }

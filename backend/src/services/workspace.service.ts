@@ -28,7 +28,7 @@ type WorkspaceWithPopulatedMembers = Omit<
 }
 
 export class WorkSpaceService {
-  private workSpaceRepository: WorkSpaceRepository
+  private   workSpaceRepository: WorkSpaceRepository
   private channelRepository: channelRepository
 
   constructor() {
@@ -54,6 +54,23 @@ export class WorkSpaceService {
 
   async createWorkSpace(data: Partial<IWorkspace>, userId: string) {
     const joinCode = uuidv4().substring(0, 6)
+
+
+
+    // const userId = userId
+
+    //check if workspace with the same name already exists
+    const existingWorkSpace = await this.workSpaceRepository.getWorkSpaceByNameAndId(data.name!,userId);
+
+
+    console.log("EXISTANCE",existingWorkSpace)
+
+    if(existingWorkSpace){
+    
+      throw new BadRequestError({message:"You already have a workspace with the same name"})
+    
+    
+    }
 
     const response = await this.workSpaceRepository.create({
       ...data,
@@ -173,7 +190,7 @@ export class WorkSpaceService {
     if (!workspace) {
       throw new NotFoundError('Workspace not found')
     }
-    console.log(workspace)
+    console.log(workspace,userId,memberId)
 
     const isWorkSpaceAdmin = await this.isUserIsAWorkSpaceAdmin(workspace, userId)
 
@@ -192,7 +209,7 @@ export class WorkSpaceService {
 
     await this.workSpaceRepository.addMemberToWorkSpace(
       workspaceId,
-      userId,
+      memberId,
       'member',
     )
 
@@ -257,7 +274,7 @@ export class WorkSpaceService {
     )
   }
 
-  async addChannelToWorkSpace(workspaceId: string, channelId: string) {
+  async addChannelToWorkSpace(workspaceId: string, channelName: string,userId: string) {
 
 
     const workspace =
@@ -269,8 +286,10 @@ export class WorkSpaceService {
 
     const isWorkSpaceAdmin = await this.isUserIsAWorkSpaceAdmin(
       workspace,
-      workspaceId,
+      userId,
     )
+
+   
 
     if (!isWorkSpaceAdmin) {
       throw new BadRequestError({
@@ -278,7 +297,7 @@ export class WorkSpaceService {
       })
     }
 
-    await this.workSpaceRepository.addChannelToWorkSpace(workspaceId, channelId)
+    await this.workSpaceRepository.addChannelToWorkSpace(workspaceId, channelName)
 
     return {
       message: 'Channel added to workspace successfully',

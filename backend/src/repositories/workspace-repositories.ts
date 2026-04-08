@@ -7,13 +7,7 @@ import { UserRepository } from './user-repositories'
 import { channelRepository } from './channel-repositories'
 
 interface IWorkSpaceMemberPopulated {
-  memberId: {
-    _id: Types.ObjectId
-    name: string
-    email: string
-    avatar: string
-    username: string
-  }
+  memberId: Types.ObjectId
   role: 'admin' | 'member'
 }
 
@@ -31,7 +25,7 @@ export class WorkSpaceRepository extends curdRepository<IWorkspace> {
     return await Workspace.findById(id)
       .populate<{
         members: IWorkSpaceMemberPopulated[]
-      }>('members.memberId', 'name email avatar username')
+      }>('members')
       .populate<{
         channels: { name: string }[]
       }>('channels', 'name')
@@ -41,6 +35,24 @@ export class WorkSpaceRepository extends curdRepository<IWorkspace> {
     return await Workspace.findOne({ name })
   }
 
+
+  async getWorkSpaceByNameAndId(name:string,id: string) {
+
+
+    const workspace = await Workspace.findOne({name,
+      members:{
+        $elemMatch:{
+          memberId:new Types.ObjectId(id)
+        }
+      }
+    })
+
+   
+    return workspace;
+
+   
+
+  }
   async getWokSpaceByJoinCode(joinCode: string) {
     return await Workspace.findOne({ joinCode })
   }
@@ -131,7 +143,7 @@ export class WorkSpaceRepository extends curdRepository<IWorkspace> {
     )
 
     if (isChannelExists) {
-      throw new BadRequestError({ message: 'Channel is already a member of this workspace' })
+      throw new BadRequestError({ message: 'Two Channel cannot have same name' })
     }
 
     const channel = await this.channelRepository.create({
