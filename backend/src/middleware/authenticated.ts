@@ -4,12 +4,13 @@ import User from '../models/user.model'
 import { AuthUser } from '../types/express'
 import { asyncHandler } from '../utils/error/async-handler'
 import { NotFoundError, UnAuthenticatedError } from '../utils/error/error'
+import { logger } from '../utils/logger'
 
 export const isAuthenticated = asyncHandler(
   async (req: Request, _res: Response, next: NextFunction) => {
   
     const token = req.headers['x-access-token'] as string
-    console.log('TOKEN', req.headers)
+    // console.log('TOKEN', req.headers)
     if (!token) {
       throw new UnAuthenticatedError('Unauthorized', 'AUTHENTICATION_ERROR')
     }
@@ -18,6 +19,7 @@ export const isAuthenticated = asyncHandler(
     try {
       payload = verifyAccessToken(token)
     } catch (error: any) {
+      logger.error({ err: error.message }, 'Error verifying access token')
       if (error.name === 'TokenExpiredError') {
         throw new UnAuthenticatedError('Token expired', 'TOKEN_EXPIRED')
       }

@@ -5,6 +5,7 @@ import { BadRequestError, NotFoundError } from '../utils/error/error'
 import { curdRepository } from './curd-repositories'
 import { UserRepository } from './user-repositories'
 import { channelRepository } from './channel-repositories'
+import { logger } from '../utils/logger'
 
 interface IWorkSpaceMemberPopulated {
   memberId: Types.ObjectId
@@ -65,6 +66,7 @@ export class WorkSpaceRepository extends curdRepository<IWorkspace> {
     const isWorkSpaceExits = await this.findById(workspcaeId)
 
     if (!isWorkSpaceExits) {
+      logger.error({ workspaceId: workspcaeId }, 'Workspace not found when adding member')
       throw new NotFoundError('Workspace not found')
     }
 
